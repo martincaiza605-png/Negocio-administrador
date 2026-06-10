@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control - Gestión Avanzada</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.75);
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --mesa-color: #38bdf8;
+            --llevar-color: #f59e0b;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 30px;
+            box-sizing: border-box;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* PANTALLA LOGIN */
+        .login-container {
+            margin: auto;
+            max-width: 400px;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 40px 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .login-container input {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            background: #1e293b;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+            box-sizing: border-box;
+            outline: none;
+        }
+        .login-container input:focus { border-color: var(--primary); }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+        .btn:hover { background: var(--primary-hover); }
+        .btn-back { background: #475569; margin-bottom: 20px; }
+        .btn-back:hover { background: #334155; }
+
+        /* SECCIONES ESCONDIDAS */
+        .screen { display: none; }
+        .screen.active { display: block; }
+
+        /* MENÚ PRINCIPAL DEL PANEL */
+        .main-menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .card-stat {
+            background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%);
+            border: 2px solid #581c87;
+            padding: 25px;
+            border-radius: 16px;
+            text-align: center;
+        }
+        .card-stat div { font-size: 0.9rem; color: #d8b4fe; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; }
+        .card-stat span { font-size: 2.2rem; font-weight: 800; color: #f43f5e; display: block; margin-top: 10px; }
+
+        .btn-menu {
+            background: rgba(51, 65, 85, 0.5);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 30px 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-menu:hover { background: rgba(71, 85, 105, 0.7); transform: translateY(-3px); border-color: rgba(255,255,255,0.2); }
+
+        /* GRID DE ÓRDENES */
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .order-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 200px;
+        }
+
+        .badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .badge.mesa { background: rgba(56, 189, 248, 0.2); color: var(--mesa-color); }
+        .badge.llevar { background: rgba(245, 158, 11, 0.2); color: var(--llevar-color); }
+
+        .order-id { font-size: 1.4rem; font-weight: 800; margin-bottom: 10px; }
+        .order-details { font-size: 1.05rem; margin-bottom: 15px; }
+        .order-complement { font-size: 0.9rem; color: var(--text-muted); margin-top: 5px; }
+        .order-price-tag { color: #34d399; font-weight: bold; margin-top: 5px; font-size: 0.95rem;}
+
+        .btn-complete {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+        .btn-complete:hover { background: #059669; }
+
+        /* RELLENAR INVENTARIO */
+        .inventory-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+        .inventory-table th, .inventory-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .inventory-table th { background: rgba(15, 23, 42, 0.8); color: var(--text-muted); }
+        
+        .btn-buy {
+            background: #eab308;
+            color: #0f172a;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-buy:hover { background: #ca8a04; }
+
+        /* HISTORIAL */
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .history-item {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 15px 20px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .no-orders { padding: 40px; text-align: center; color: var(--text-muted); width: 100%; box-sizing: border-box;}
+        .error-msg { color: var(--danger); margin-top: 10px; font-weight: bold; display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="screen-login" class="screen active">
+        <div class="login-container">
+            <h2>🔑 Acceso Administrativo</h2>
+            <p style="color: var(--text-muted); font-size:0.9rem">Ingrese la clave maestra de control</p>
+            <input type="password" id="password-input" placeholder="Contraseña">
+            <button class="btn" onclick="checkPassword()">Entrar al Panel</button>
+            <div id="login-error" class="error-msg">Contraseña Incorrecta</div>
+        </div>
+    </div>
+
+    <div id="screen-menu" class="screen">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:20px;">
+            <h1>👨‍🍳 Panel de Control Central</h1>
+            <button class="btn" style="background:#ef4444" onclick="logout()">Cerrar Sesión</button>
+        </div>
+
+        <div class="main-menu-grid">
+            <div class="card-stat">
+                <div>Fondos Disponibles</div>
+                <span id="funds-display">$0.00</span>
+            </div>
+            <button class="btn-menu" onclick="openScreen('screen-orders')">
+                <span>📋 Órdenes Pendientes</span>
+                <small style="font-size:0.8rem; color:var(--text-muted)" id="badge-pending-count">0 activas</small>
+            </button>
+            <button class="btn-menu" onclick="openScreen('screen-history')">
+                <span>📜 Historial de Despacho</span>
+                <small style="font-size:0.8rem; color:var(--text-muted)" id="badge-history-count">0 procesadas</small>
+            </button>
+            <button class="btn-menu" onclick="openScreen('screen-inventory')">
+                <span>📦 Rellenar Inventario</span>
+                <small style="font-size:0.8rem; color:var(--text-muted)">Abastecer Tienda</small>
+            </button>
+        </div>
+    </div>
+
+    <div id="screen-orders" class="screen">
+        <button class="btn btn-back" onclick="openScreen('screen-menu')">← Volver al Menú</button>
+        <h2>📋 Cola de Producción en Cocina</h2>
+        <div class="orders-grid" id="orders-container"></div>
+    </div>
+
+    <div id="screen-history" class="screen">
+        <button class="btn btn-back" onclick="openScreen('screen-menu')">← Volver al Menú</button>
+        <h2>📜 Registro e Historial de Pedidos Finalizados</h2>
+        <div class="history-list" id="history-container"></div>
+    </div>
+
+    <div id="screen-inventory" class="screen">
+        <button class="btn btn-back" onclick="openScreen('screen-menu')">← Volver al Menú</button>
+        <h2>📦 Logística y Reabastecimiento de Productos</h2>
+        <p style="color:var(--text-muted)">Compra existencias con los fondos de caja actuales. Coste de reposición con descuento de **$0.20** sobre PVP.</p>
+        
+        <table class="inventory-table">
+            <thead>
+                <tr>
+                    <th>Ítem</th>
+                    <th>Tipo</th>
+                    <th>Existencia Actual</th>
+                    <th>Costo Reposición</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="inventory-table-body"></tbody>
+        </table>
+    </div>
+
+    <script>
+        // Inicialización de Variables de Caja y Logística Compartida
+        if (!localStorage.getItem('adminFunds')) localStorage.setItem('adminFunds', '0.00');
+        if (!localStorage.getItem('despachadosHistory')) localStorage.setItem('despachadosHistory', JSON.stringify([]));
+
+        // Inicializar inventario por defecto en LocalStorage si no existe para compartir con el cliente
+        let localProducts = [
+            { id: 'p1', name: 'Hamburguesa Clásica', price: 2.00, icon: '🍔', stock: 5, type: 'Comida' },
+            { id: 'p2', name: 'Pizza Pepperoni (Porción)', price: 1.50, icon: '🍕', stock: 3, type: 'Comida' },
+            { id: 'p3', name: 'Dorilocos', price: 1.75, icon: '💥', stock: 0, type: 'Comida' },
+            { id: 'p4', name: 'Papas Frías', price: 1.25, icon: '🍟', stock: 8, type: 'Comida' }
+        ];
+
+        let localBeverages = [
+            { id: 'b2', name: 'Con Coca-Cola', price: 0.80, icon: '🥤', stock: 4, type: 'Bebida' },
+            { id: 'b3', name: 'Con Jugo Natural', price: 0.50, icon: '🧃', stock: 0, type: 'Bebida' },
+            { id: 'b4', name: 'Con Agua Mineral', price: 0.60, icon: '💧', stock: 12, type: 'Bebida' }
+        ];
+
+        if(!localStorage.getItem('productsInventory')) localStorage.setItem('productsInventory', JSON.stringify(localProducts));
+        if(!localStorage.getItem('beveragesInventory')) localStorage.setItem('beveragesInventory', JSON.stringify(localBeverages));
+
+        // Control de Seguridad
+        function checkPassword() {
+            const pass = document.getElementById('password-input').value;
+            if (pass === "Elite Mike") {
+                document.getElementById('login-error').style.display = 'none';
+                openScreen('screen-menu');
+            } else {
+                document.getElementById('login-error').style.display = 'block';
+            }
+        }
+
+        function logout() {
+            document.getElementById('password-input').value = '';
+            openScreen('screen-login');
+        }
+
+        function openScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            updateMetrics();
+            if(screenId === 'screen-orders') renderOrders();
+            if(screenId === 'screen-history') renderHistory();
+            if(screenId === 'screen-inventory') renderInventoryManagement();
+        }
+
+        // Cálculos financieros y contadores
+        function updateMetrics() {
+            const funds = parseFloat(localStorage.getItem('adminFunds'));
+            document.getElementById('funds-display').innerText = `$${funds.toFixed(2)}`;
+
+            const pending = JSON.parse(localStorage.getItem('kioskoOrders')) || [];
+            document.getElementById('badge-pending-count').innerText = `${pending.length} activas`;
+
+            const history = JSON.parse(localStorage.getItem('despachadosHistory')) || [];
+            document.getElementById('badge-history-count').innerText = `${history.length} procesadas`;
+        }
+
+        // Obtener costos según lógica de negocio
+        function getOrderItemPrice(productName, detailName) {
+            let total = 0;
+            const prods = JSON.parse(localStorage.getItem('productsInventory')) || localProducts;
+            const bevs = JSON.parse(localStorage.getItem('beveragesInventory')) || localBeverages;
+
+            const pMatch = prods.find(p => p.name === productName);
+            if(pMatch) total += pMatch.price;
+
+            const bMatch = bevs.find(b => b.name === detailName);
+            if(bMatch) total += bMatch.price;
+
+            return total;
+        }
+
+        // RENDER: Órdenes pendientes
+        function renderOrders() {
+            const container = document.getElementById('orders-container');
+            let orders = JSON.parse(localStorage.getItem('kioskoOrders')) || [];
+            container.innerHTML = '';
+
+            if (orders.length === 0) {
+                container.innerHTML = '<div class="no-orders">📭 No hay órdenes pendientes en este momento.</div>';
+                return;
+            }
+
+            orders.forEach(order => {
+                const card = document.createElement('div');
+                card.className = 'order-card';
+                
+                const isMesa = order.service === 'servir';
+                const badgeClass = isMesa ? 'mesa' : 'llevar';
+                const badgeText = isMesa ? '🍽| Mesa' : '🛍| Llevar';
+                const idLabel = isMesa ? `Turno #${order.id}` : `Llevar #${order.id}`;
+                const orderPrice = getOrderItemPrice(order.product, order.detail);
+
+                card.innerHTML = `
+                    <span class="badge ${badgeClass}">${badgeText}</span>
+                    <div>
+                        <div class="order-id" style="color: ${isMesa ? 'var(--mesa-color)' : 'var(--llevar-color)'}">${idLabel}</div>
+                        <div class="order-details">
+                            <strong>${order.product}</strong>
+                            <div class="order-complement">${order.detail}</div>
+                            <div class="order-price-tag">Valor: $${orderPrice.toFixed(2)}</div>
+                        </div>
+                    </div>
+                    <button class="btn-complete" onclick="despacharOrden('${order.uid}', ${orderPrice})">✅ Despachar y Cobrar</button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // CONTROL: Despacho Contable e Historial
+        function despacharOrden(uid, priceToAdd) {
+            let orders = JSON.parse(localStorage.getItem('kioskoOrders')) || [];
+            const targetOrder = orders.find(o => o.uid === uid);
+
+            if(targetOrder) {
+                // Remover de pendientes
+                orders = orders.filter(o => o.uid !== uid);
+                localStorage.setItem('kioskoOrders', JSON.stringify(orders));
+
+                // Sumar dinero a los fondos financieros de forma exacta
+                let currentFunds = parseFloat(localStorage.getItem('adminFunds'));
+                currentFunds += priceToAdd;
+                localStorage.setItem('adminFunds', currentFunds.toFixed(2));
+
+                // Registrar en el historial de despachos
+                let history = JSON.parse(localStorage.getItem('despachadosHistory')) || [];
+                targetOrder.despachadoAt = new Date().toLocaleTimeString();
+                targetOrder.totalPrice = priceToAdd;
+                history.push(targetOrder);
+                localStorage.setItem('despachadosHistory', JSON.stringify(history));
+
+                // Sincronizar campanas del cliente
+                localStorage.setItem('kiosco_update_trigger', Date.now());
+                
+                updateMetrics();
+                renderOrders();
+            }
+        }
+
+        // RENDER: Historial de Despachos
+        function renderHistory() {
+            const container = document.getElementById('history-container');
+            const history = JSON.parse(localStorage.getItem('despachadosHistory')) || [];
+            container.innerHTML = '';
+
+            if(history.length === 0) {
+                container.innerHTML = '<div class="no-orders">📜 El historial de ventas está vacío.</div>';
+                return;
+            }
+
+            history.reverse().forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'history-item';
+                row.innerHTML = `
+                    <div>
+                        <strong style="color:var(--primary)">[${item.service.toUpperCase()} #${item.id}]</strong> 
+                        <span>${item.product} (${item.detail})</span>
+                        <div style="font-size:0.8rem; color:var(--text-muted)">Despachado a las: ${item.despachadoAt}</div>
+                    </div>
+                    <span style="color:#10b981; font-weight:bold; font-family:monospace">+$${item.totalPrice.toFixed(2)}</span>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        // RENDER: Abastecimiento y Logística de Inventario
+        function renderInventoryManagement() {
+            const tbody = document.getElementById('inventory-table-body');
+            tbody.innerHTML = '';
+
+            const prods = JSON.parse(localStorage.getItem('productsInventory')) || localProducts;
+            const bevs = JSON.parse(localStorage.getItem('beveragesInventory')) || localBeverages;
+
+            // Renderizar comidas
+            prods.forEach((p, idx) => {
+                const restCost = Math.max(0, p.price - 0.20); // PVP - 0.20
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${p.icon} ${p.name}</strong></td>
+                    <td><span style="color:#a855f7">🍔 Menú</span></td>
+                    <td><span style="font-weight:bold; color:${p.stock === 0 ? 'var(--danger)':'white'}">${p.stock} uds</span></td>
+                    <td style="font-family:monospace; color:#eab308">$${restCost.toFixed(2)}</td>
+                    <td><button class="btn-buy" onclick="buyStockItem('prod', ${idx}, ${restCost})">➕ Comprar +1</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Renderizar bebidas
+            bevs.forEach((b, idx) => {
+                const restCost = Math.max(0, b.price - 0.20); // PVP - 0.20
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${b.icon} ${b.name}</strong></td>
+                    <td><span style="color:#06b6d4">🥤 Bebida</span></td>
+                    <td><span style="font-weight:bold; color:${b.stock === 0 ? 'var(--danger)':'white'}">${b.stock} uds</span></td>
+                    <td style="font-family:monospace; color:#eab308">$${restCost.toFixed(2)}</td>
+                    <td><button class="btn-buy" onclick="buyStockItem('bev', ${idx}, ${restCost})">➕ Comprar +1</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // CONTROL: Compra Financiera de Inventario
+        function buyStockItem(type, index, cost) {
+            let currentFunds = parseFloat(localStorage.getItem('adminFunds'));
+            
+            if (currentFunds < cost) {
+                alert("❌ Fondos Insuficientes: No hay dinero en caja para cubrir esta compra logística.");
+                return;
+            }
+
+            if(type === 'prod') {
+                let prods = JSON.parse(localStorage.getItem('productsInventory'));
+                prods[index].stock += 1;
+                localStorage.setItem('productsInventory', JSON.stringify(prods));
+            } else {
+                let bevs = JSON.parse(localStorage.getItem('beveragesInventory'));
+                bevs[index].stock += 1;
+                localStorage.setItem('beveragesInventory', JSON.stringify(bevs));
+            }
+
+            // Restar costo de los fondos de caja de forma contable exacta
+            currentFunds -= cost;
+            localStorage.setItem('adminFunds', currentFunds.toFixed(2));
+
+            // Notificar cambios para que la app del cliente los absorba dinámicamente
+            localStorage.setItem('kiosco_update_trigger', Date.now());
+
+            updateMetrics();
+            renderInventoryManagement();
+        }
+
+        // Sincronización entre Ventanas en vivo
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'kioskoOrders' || e.key === 'kiosco_update_trigger') {
+                updateMetrics();
+                if(document.getElementById('screen-orders').classList.contains('active')) renderOrders();
+                if(document.getElementById('screen-inventory').classList.contains('active')) renderInventoryManagement();
+            }
+        });
+    </script>
+</body>
+</html>
